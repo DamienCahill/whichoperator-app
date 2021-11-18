@@ -7,12 +7,15 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
     ArrayList<Question> questions;
@@ -25,7 +28,11 @@ public class MainActivity extends AppCompatActivity {
     TextView text;
     TextView score;
     TextView highScore;
+    TextView timer;
     String HIGHSCORE="highScore";
+    MyCountDownTimer counterDownTimer;
+    boolean gameRunning = false;
+    Timer myTimer;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
         btn2 = findViewById(R.id.btn2);
         btn3 = findViewById(R.id.btn3);
         score = findViewById(R.id.score);
+        timer = findViewById(R.id.timer);
         highScore = findViewById(R.id.highscore);
         highScore.setText("High Score :" +getHighScore());
         populateComponentText();
@@ -77,22 +85,52 @@ public class MainActivity extends AppCompatActivity {
             currentQuestion = getQuestion();
             populateComponentText();
         } else {
-            if (currentScore > getHighScore())
-                saveScore(currentScore);
+            counterDownTimer.addTime(-5000);
+        }
+        currentQuestion = getQuestion();
+        populateComponentText();
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("INCORRECT! Your total score was " + currentScore)
-                    .setCancelable(false)
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            setUp();
+        if (!gameRunning) {
+            counterDownTimer = new MyCountDownTimer(100000, 1000, timer);
+            counterDownTimer.start();
+            gameRunning = true;
+
+            myTimer =new Timer();
+            myTimer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (gameRunning && timer.getText().equals("Times Up")) {
+                                gameRunning=false;
+                                gameOver(true);
+                            }
                         }
                     });
-            AlertDialog alert = builder.create();
-            alert.show();
+                }
+            }, 100, 1000);
         }
     }
 
+    public void gameOver(boolean timeUp) {
+        if (currentScore > getHighScore())
+            saveScore(currentScore);
+        myTimer.cancel();
+        myTimer=null;
+        counterDownTimer=null;
+        String gameOverReason = timeUp ? "Times Up! " : "INCORRECT! ";
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(gameOverReason + "Your total score was " + currentScore)
+                .setCancelable(false)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        setUp();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
     public void populateComponentText() {
 
         btn0.setText(currentQuestion.getAnswers().get(0));
