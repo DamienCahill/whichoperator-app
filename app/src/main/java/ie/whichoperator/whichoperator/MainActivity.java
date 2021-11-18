@@ -14,6 +14,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
     ArrayList<Question> questions;
@@ -28,7 +30,9 @@ public class MainActivity extends AppCompatActivity {
     TextView highScore;
     TextView timer;
     String HIGHSCORE="highScore";
+    MyCountDownTimer counterDownTimer;
     boolean gameRunning = false;
+    Timer myTimer;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,35 +79,46 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void answerQuestion(String btnText) {
-
-        if (!gameRunning) {
-            gameRunning = true;
-            new CountDownTimer(10000, 1000) {
-
-                public void onTick(long millisUntilFinished) {
-                    timer.setText("seconds remaining: " + millisUntilFinished / 1000);
-                }
-
-                public void onFinish() {
-                    timer.setText("Times Up");
-                    gameOver(true);
-                }
-            }.start();
-        }
         currentQuestion.setProvidedAnswer(btnText);
         if (currentQuestion.getAnsweredCorrectly()) {
             currentScore++;
             currentQuestion = getQuestion();
             populateComponentText();
         } else {
-            gameOver(false);
+            counterDownTimer.addTime(-5000);
+        }
+        currentQuestion = getQuestion();
+        populateComponentText();
+
+        if (!gameRunning) {
+            counterDownTimer = new MyCountDownTimer(100000, 1000, timer);
+            counterDownTimer.start();
+            gameRunning = true;
+
+            myTimer =new Timer();
+            myTimer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (gameRunning && timer.getText().equals("Times Up")) {
+                                gameRunning=false;
+                                gameOver(true);
+                            }
+                        }
+                    });
+                }
+            }, 100, 1000);
         }
     }
 
     public void gameOver(boolean timeUp) {
         if (currentScore > getHighScore())
             saveScore(currentScore);
-
+        myTimer.cancel();
+        myTimer=null;
+        counterDownTimer=null;
         String gameOverReason = timeUp ? "Times Up! " : "INCORRECT! ";
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(gameOverReason + "Your total score was " + currentScore)
@@ -115,7 +130,6 @@ public class MainActivity extends AppCompatActivity {
                 });
         AlertDialog alert = builder.create();
         alert.show();
-        gameRunning=false;
     }
     public void populateComponentText() {
 
