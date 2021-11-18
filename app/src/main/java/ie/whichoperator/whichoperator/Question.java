@@ -12,7 +12,7 @@ public class Question {
     private ArrayList<Character> answerOptions;
     private char[] correctAnswers;
     private char providedAnswer;
-    private Boolean answeredCorrectly;
+    private boolean answeredCorrectly;
 
     public Question(String text, char[] answers) {
         this.answeredCorrectly=false;
@@ -66,7 +66,7 @@ public class Question {
         }
     }
 
-    public Boolean getAnsweredCorrectly() {
+    public boolean getAnsweredCorrectly() {
         return answeredCorrectly;
     }
 
