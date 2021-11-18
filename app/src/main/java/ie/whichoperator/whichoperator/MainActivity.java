@@ -7,32 +7,34 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import java.util.ArrayList;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
-    ArrayList<Question> questions;
+
+    final private String SHARED_PREFERENCE ="high_Score_shared_preference";
+    final private int COUNTDOWN_START = 60000; // 60000 -> 1 MINUTE
+
+    Game game;
+
     Button btn0;
     Button btn1;
     Button btn2;
     Button btn3;
-    int currentScore;
-    Question currentQuestion;
+
     TextView text;
     TextView score;
     TextView highScore;
     TextView timer;
-    String HIGHSCORE="highScore";
+
     MyCountDownTimer counterDownTimer;
-    boolean gameRunning = false;
     Timer myTimer;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,8 +42,10 @@ public class MainActivity extends AppCompatActivity {
         setUp();
     }
     public void setUp() {
-        currentScore = 0;
-        currentQuestion = getQuestion();
+        game = new Game();
+        game.setCurrentQuestion(Question.getQuestion());
+
+        //Initialise UI Components and set the text on them
         text = findViewById(R.id.text);
         btn0 = findViewById(R.id.btn0);
         btn1 = findViewById(R.id.btn1);
@@ -50,8 +54,9 @@ public class MainActivity extends AppCompatActivity {
         score = findViewById(R.id.score);
         timer = findViewById(R.id.timer);
         highScore = findViewById(R.id.highscore);
-        highScore.setText("High Score :" +getHighScore());
+        highScore.setText("High Score :" +Game.getHighScore(getSharedPreferences(SHARED_PREFERENCE,Context.MODE_PRIVATE)));
         populateComponentText();
+
         btn0.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -79,31 +84,45 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void answerQuestion(String btnText) {
-        currentQuestion.setProvidedAnswer(btnText);
-        if (currentQuestion.getAnsweredCorrectly()) {
-            currentScore++;
-            currentQuestion = getQuestion();
-            populateComponentText();
-        } else {
+        game.getCurrentQuestion().setProvidedAnswer(btnText.charAt(0));
+        if (game.getCurrentQuestion().getAnsweredCorrectly()) { // correctly answered
+
+            if (game.isRunning())
+                counterDownTimer.addTime(1000);
+
+            game.increaseScore();
+        } else if (!game.isRunning()){ // incorrectly answered first question
+            // end the game with a score of 0!
+            gameOver(false);
+            return;
+        } else { // incorrectly answered non first question
+            //subtract 5 seconds from remaining time
             counterDownTimer.addTime(-5000);
         }
-        currentQuestion = getQuestion();
+
+        //get the next question
+        game.setCurrentQuestion(Question.getQuestion());
         populateComponentText();
 
-        if (!gameRunning) {
-            counterDownTimer = new MyCountDownTimer(100000, 1000, timer);
+        // a new game is starting
+        if (!game.isRunning()) {
+            //start a new countdown timer
+            counterDownTimer = new MyCountDownTimer(COUNTDOWN_START, 1000, timer);
             counterDownTimer.start();
-            gameRunning = true;
 
-            myTimer =new Timer();
+            //set the state of the game to be running
+            game.setRunningState(true);
+
+            //start a timer schedule to check if time has run out
+            myTimer = new Timer();
             myTimer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if (gameRunning && timer.getText().equals("Times Up")) {
-                                gameRunning=false;
+                            if (game.isRunning() && timer.getText().equals("Times Up")) { // end the game
+                                game.setRunningState(false);
                                 gameOver(true);
                             }
                         }
@@ -114,17 +133,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void gameOver(boolean timeUp) {
-        if (currentScore > getHighScore())
-            saveScore(currentScore);
-        myTimer.cancel();
-        myTimer=null;
-        counterDownTimer=null;
+        // Check for a new high score and save it if there is
+        if (game.getCurrentScore() > Game.getHighScore(getSharedPreferences(SHARED_PREFERENCE, Context.MODE_PRIVATE)))
+            Game.setNewHighScore(game.getCurrentScore(),getSharedPreferences(SHARED_PREFERENCE,Context.MODE_PRIVATE));
+
+        //set the timers to be null
+        if (myTimer!=null) {
+            myTimer.cancel();
+            myTimer = null;
+        }
+
+        if (counterDownTimer!=null)
+            counterDownTimer=null;
+
+        // set the appropriate ending message
         String gameOverReason = timeUp ? "Times Up! " : "INCORRECT! ";
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(gameOverReason + "Your total score was " + currentScore)
+        builder.setMessage(gameOverReason + "Your total score was " + game.getCurrentScore())
                 .setCancelable(false)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
+                        //set a new game up
                         setUp();
                     }
                 });
@@ -133,66 +162,12 @@ public class MainActivity extends AppCompatActivity {
     }
     public void populateComponentText() {
 
-        btn0.setText(currentQuestion.getAnswers().get(0));
-        btn1.setText(currentQuestion.getAnswers().get(1));
-        btn2.setText(currentQuestion.getAnswers().get(2));
-        btn3.setText(currentQuestion.getAnswers().get(3));
-        text.setText(currentQuestion.getText());
-        score.setText("Current Score: " + currentScore);
-        highScore.setText("High Score :" +getHighScore());
-    }
-    public Question getQuestion() {
-
-        Random rand = new Random();
-        int ranNum = rand.nextInt(3+1);
-        String[] options = {"*", "/", "+", "-"};
-        String answer = options[ranNum];
-        String questionText = "";
-        int num1,num2,num3;
-        switch (ranNum) {
-            case 0:
-                num1 = rand.nextInt(0 + 40);
-                num2 = rand.nextInt(0 + 40);
-                num3 = num1 * num2;
-                questionText = num1 + " ? " + num2 + " = " + num3;
-                break;
-            case 1:
-                num1 = rand.nextInt(0 + 40);
-                if (num1 % 3 == 0) {
-                    num2 = 3;
-                } else if (num1 % 5 == 0) {
-                    num2 = 5;
-                } else {
-                    num2 = num1;
-                }
-                num3 = num1 / num2;
-                questionText = num1 + " ? " + num2 + " = " + num3;
-                break;
-
-            case 2:
-                num1 = rand.nextInt(0 + 40);
-                num2 = rand.nextInt(0 + 40);
-                num3 = num1 + num2;
-                questionText = num1 + " ? " + num2 + " = " + num3;
-                break;
-            case 3:
-                num1 = rand.nextInt(0 + 40);
-                num2 = rand.nextInt(0 + 40);
-                num3 = num1 - num2;
-                questionText = num1 + " ? " + num2 + " = " + num3;
-                break;
-        }
-        return new Question(questionText, options, answer);
+        btn0.setText(game.getCurrentQuestion().getAnswerOptions().get(0) +"");
+        btn1.setText(game.getCurrentQuestion().getAnswerOptions().get(1)+"");
+        btn2.setText(game.getCurrentQuestion().getAnswerOptions().get(2)+"");
+        btn3.setText(game.getCurrentQuestion().getAnswerOptions().get(3)+"");
+        text.setText(game.getCurrentQuestion().getText());
+        score.setText("Current Score: " + game.getCurrentScore());
     }
 
-    public void saveScore(int score) {
-        SharedPreferences mySharedPref = getSharedPreferences(HIGHSCORE, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = mySharedPref.edit();
-        editor.putInt("score", score);
-        editor.apply();
-    }
-    public int getHighScore() {
-        SharedPreferences mySharedPref = getSharedPreferences(HIGHSCORE, Context.MODE_PRIVATE);
-        return mySharedPref.getInt("score", 0);
-    }
 }

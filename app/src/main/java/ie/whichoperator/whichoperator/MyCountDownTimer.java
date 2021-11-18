@@ -1,5 +1,14 @@
 package ie.whichoperator.whichoperator;
+/*
+    This class is a modified version of android.os.CountDownTimer
+    https://developer.android.com/reference/android/os/CountDownTimer
+    https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/os/CountDownTimer.java
 
+    The modifications were made so the class could instantiated and allow the timer remaining to be
+    updated after the countdown had started
+
+    Abstract methods from the original methods have also been implemented in this version of the class.
+ */
 import android.annotation.SuppressLint;
 import android.os.Handler;
 import android.os.Message;
@@ -9,6 +18,7 @@ import android.widget.TextView;
 import org.w3c.dom.Text;
 
 public  class MyCountDownTimer {
+
     /**
      * Millis since epoch when alarm should stop.
      */
@@ -55,19 +65,30 @@ public  class MyCountDownTimer {
         mHandler.sendMessage(mHandler.obtainMessage(MSG));
         return this;
     }
+    /**
+     * Update the TextView with remaining seconds.
+     */
     public void onTick(long millisUntilFinished) {
-        timerText.setText("seconds remaining: " + millisUntilFinished / 1000);
+        if (millisUntilFinished >0)
+            timerText.setText("seconds remaining: " + millisUntilFinished / 1000);
+        else
+            onFinish();
     }
-
+    /**
+     * Update the TextView to indicate time has run out.
+     */
     public void onFinish() {
         timerText.setText("Times Up");
-        //gameOver(true);
     }
-    private static final int MSG = 1;
 
+    /**
+     * Change the remaining time.
+     */
     public synchronized void addTime(long millis) {
         mStopTimeInFuture += millis;
+        timerText.setText("seconds remaining " + ((mStopTimeInFuture - SystemClock.elapsedRealtime())/1000));
     }
+    private static final int MSG = 1;
     // handles counting down
     @SuppressLint("HandlerLeak")
     private Handler mHandler = new Handler() {
