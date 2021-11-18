@@ -35,15 +35,18 @@ public class MainActivity extends AppCompatActivity {
     MyCountDownTimer counterDownTimer;
     Timer myTimer;
 
+    Random rand;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        rand = new Random();
         setUp();
     }
     public void setUp() {
         game = new Game();
-        game.setCurrentQuestion(Question.getQuestion());
+        game.setCurrentQuestion(Question.getQuestion(rand.nextInt(40),rand.nextInt(40),rand.nextInt(3+1)));
 
         //Initialise UI Components and set the text on them
         text = findViewById(R.id.text);
@@ -101,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //get the next question
-        game.setCurrentQuestion(Question.getQuestion());
+        game.setCurrentQuestion(Question.getQuestion(rand.nextInt(40),rand.nextInt(40),rand.nextInt(3+1)));
         populateComponentText();
 
         // a new game is starting

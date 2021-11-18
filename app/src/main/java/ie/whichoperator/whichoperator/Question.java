@@ -74,16 +74,13 @@ public class Question {
         this.answeredCorrectly = answeredCorrectly;
     }
 
-    public static Question getQuestion() {
+    public static Question getQuestion(int num1, int num2, int ranNum) {
 
-        Random rand = new Random();
-        int ranNum = rand.nextInt(3+1);
         char[] possibleAnswers = {'/', '*','-','+'};
         String questionText = "";
-        int num1,num2,num3=0;
+        int num3=0;
         ArrayList<Character> answers= new ArrayList<Character>();
         if (ranNum == 0) { // Division is a special case, numbers must whole ints
-            num1 = rand.nextInt(40);
             if (num1 % 3 == 0) {
                 num2 = 3;
             } else if (num1 % 5 == 0) {
@@ -93,8 +90,6 @@ public class Question {
             }
             num3 = num1 / num2;
         } else { // multiplication, subtraction, addition
-            num1 = rand.nextInt( 40);
-            num2 = rand.nextInt(40);
 
             if (ranNum == 1) { // multiplication
                 num3 = num1*num2;
