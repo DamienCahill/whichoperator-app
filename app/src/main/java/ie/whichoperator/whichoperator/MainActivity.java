@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -25,7 +26,9 @@ public class MainActivity extends AppCompatActivity {
     TextView text;
     TextView score;
     TextView highScore;
+    TextView timer;
     String HIGHSCORE="highScore";
+    boolean gameRunning = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
         btn2 = findViewById(R.id.btn2);
         btn3 = findViewById(R.id.btn3);
         score = findViewById(R.id.score);
+        timer = findViewById(R.id.timer);
         highScore = findViewById(R.id.highscore);
         highScore.setText("High Score :" +getHighScore());
         populateComponentText();
@@ -71,28 +75,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void answerQuestion(String btnText) {
+
+        if (!gameRunning) {
+            gameRunning = true;
+            new CountDownTimer(10000, 1000) {
+
+                public void onTick(long millisUntilFinished) {
+                    timer.setText("seconds remaining: " + millisUntilFinished / 1000);
+                }
+
+                public void onFinish() {
+                    timer.setText("Times Up");
+                    gameOver(true);
+                }
+            }.start();
+        }
         currentQuestion.setProvidedAnswer(btnText);
         if (currentQuestion.getAnsweredCorrectly()) {
             currentScore++;
             currentQuestion = getQuestion();
             populateComponentText();
         } else {
-            if (currentScore > getHighScore())
-                saveScore(currentScore);
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("INCORRECT! Your total score was " + currentScore)
-                    .setCancelable(false)
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            setUp();
-                        }
-                    });
-            AlertDialog alert = builder.create();
-            alert.show();
+            gameOver(false);
         }
     }
 
+    public void gameOver(boolean timeUp) {
+        if (currentScore > getHighScore())
+            saveScore(currentScore);
+
+        String gameOverReason = timeUp ? "Times Up! " : "INCORRECT! ";
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(gameOverReason + "Your total score was " + currentScore)
+                .setCancelable(false)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        setUp();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+        gameRunning=false;
+    }
     public void populateComponentText() {
 
         btn0.setText(currentQuestion.getAnswers().get(0));
