@@ -7,7 +7,7 @@
 Project can be opened and built using [Android Studio](https://developer.android.com/studio).
 
 #### Leaderboard API
-Leaderboard REST API is WIP
+[Leaderboard REST API](https://github.com/DamienCahill/whichoperator-leaderboard-api) is WIP. The App uses the REST API to save scores and get scores to display an overall leaderboard.
 
 #### Leaderboard API credentials
 Create a file called `apikeys.properties` in the project root directory and add the following values:
