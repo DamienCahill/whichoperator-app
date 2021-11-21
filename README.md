@@ -2,10 +2,6 @@
 
 [Play Store Link](https://play.google.com/store/apps/details?id=ie.whichoperator.whichoperator)
 
-# whichoperator-app
-
-[Play Store Link](https://play.google.com/store/apps/details?id=ie.whichoperator.whichoperator)
-
 ## Development 
 #### Development Environment
 Project can be opened and built using [Android Studio](https://developer.android.com/studio).
