@@ -13,6 +13,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Scanner;
 
 public class LeaderBoardClient {
     private String URL;
@@ -35,5 +36,44 @@ public class LeaderBoardClient {
             return true;
         }
         return false;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public LeaderboardPlayer[] getLeaderboard() throws IOException {
+        //Create connection to the api
+        HttpURLConnection connection = (HttpURLConnection) new java.net.URL(URL + "/topTen").openConnection();
+
+        // set request to get
+        connection.setRequestMethod("GET");
+        String encoded = Base64.getEncoder().encodeToString((this.userName+":"+this.password).getBytes(StandardCharsets.UTF_8));
+        connection.setRequestProperty("Authorization", "Basic "+encoded);
+
+        int responseCode = connection.getResponseCode();
+        if (responseCode == 200) {
+            String response = "";
+            Scanner scanner = new Scanner(connection.getInputStream());
+            while (scanner.hasNextLine()) {
+                response += scanner.nextLine();
+                response += "\n";
+            }
+            scanner.close();
+            response =response.replace("(", "");
+            response=response.replace("[", "");
+            response=response.replace("]", "");
+            response=response.replace(")", "");
+            String responseArray[] = null;
+            responseArray = response.split(",");
+            for (int i=0;i<responseArray.length;i++) {
+                responseArray[i] = responseArray[i].trim();
+            }
+            LeaderboardPlayer[] leaderboard = new LeaderboardPlayer[responseArray.length/2];
+            for (int i=0;i<responseArray.length;i+=2) {
+                leaderboard[i/2] = new LeaderboardPlayer(responseArray[i].replace("'",""), Integer.parseInt(responseArray[i+1]));
+            }
+            return leaderboard;
+        }
+
+        // an error happened
+        return null;
     }
 }
