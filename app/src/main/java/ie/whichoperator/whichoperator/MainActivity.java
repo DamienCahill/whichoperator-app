@@ -4,6 +4,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -68,6 +69,11 @@ public class MainActivity extends AppCompatActivity {
         highScore.setText("High Score :" +Game.getHighScore(getSharedPreferences(SHARED_PREFERENCE,Context.MODE_PRIVATE)));
         populateComponentText();
 
+        btn0.setEnabled(true);
+        btn1.setEnabled(true);
+        btn2.setEnabled(true);
+        btn3.setEnabled(true);
+
         btn0.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -93,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
 
     public void answerQuestion(String btnText) {
         game.getCurrentQuestion().setProvidedAnswer(btnText.charAt(0));
@@ -130,7 +137,6 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     runOnUiThread(new Runnable() {
-                        @RequiresApi(api = Build.VERSION_CODES.O)
                         @Override
                         public void run() {
                             if (game.isRunning() && timer.getText().equals("Times Up")) { // end the game
@@ -144,14 +150,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+
+    @SuppressLint("NewApi")
     public void gameOver(boolean timeUp) {
+        btn0.setEnabled(false);
+        btn1.setEnabled(false);
+        btn2.setEnabled(false);
+        btn3.setEnabled(false);
         LeaderBoardClient client = new LeaderBoardClient(BuildConfig.USERNAME, BuildConfig.PASSWORD, BuildConfig.URL);
-        try {
-            client.submitScore("unknown", game.getCurrentScore());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        new Thread(() -> {
+            try {
+                client.submitScore("unknown", game.getCurrentScore());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
         // Check for a new high score and save it if there is
         if (game.getCurrentScore() > Game.getHighScore(getSharedPreferences(SHARED_PREFERENCE, Context.MODE_PRIVATE)))
             Game.setNewHighScore(game.getCurrentScore(),getSharedPreferences(SHARED_PREFERENCE,Context.MODE_PRIVATE));
