@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
@@ -31,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     Button btn1;
     Button btn2;
     Button btn3;
+    Button btnLeaderboard;
 
     TextView text;
     TextView score;
@@ -63,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
         btn1 = findViewById(R.id.btn1);
         btn2 = findViewById(R.id.btn2);
         btn3 = findViewById(R.id.btn3);
+        btnLeaderboard = findViewById(R.id.leaderboardBtn);
         score = findViewById(R.id.score);
         timer = findViewById(R.id.timer);
         highScore = findViewById(R.id.highscore);
@@ -96,6 +99,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 answerQuestion(btn3.getText() + "");
+            }
+        });
+
+        btnLeaderboard.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(view.getContext(), LeaderboardActivity.class));
             }
         });
     }
