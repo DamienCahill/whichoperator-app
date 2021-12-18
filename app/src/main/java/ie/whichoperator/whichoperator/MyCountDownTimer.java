@@ -86,7 +86,11 @@ public  class MyCountDownTimer {
      */
     public synchronized void addTime(long millis) {
         mStopTimeInFuture += millis;
-        timerText.setText("seconds remaining " + ((mStopTimeInFuture - SystemClock.elapsedRealtime())/1000));
+        if (((mStopTimeInFuture - SystemClock.elapsedRealtime())/1000) > 0) {
+            timerText.setText("seconds remaining " + ((mStopTimeInFuture - SystemClock.elapsedRealtime())/1000));
+        } else {
+            onFinish();
+        }
     }
     private static final int MSG = 1;
     // handles counting down
