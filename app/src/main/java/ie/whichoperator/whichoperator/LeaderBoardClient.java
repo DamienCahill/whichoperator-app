@@ -12,7 +12,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import android.util.Base64;
 import java.util.Scanner;
 
 public class LeaderBoardClient {
@@ -29,7 +29,7 @@ public class LeaderBoardClient {
     public boolean submitScore(String name, int score) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(URL + "/addScore?" + "name=" + name + "&score=" + (score)).openConnection();
         connection.setRequestMethod("POST");
-        String encoded = Base64.getEncoder().encodeToString((this.userName+":"+this.password).getBytes(StandardCharsets.UTF_8));
+        String encoded = Base64.encodeToString( (this.userName+ ":"+ this.password).getBytes(), Base64.DEFAULT);
         connection.setRequestProperty("Authorization", "Basic "+encoded);
         int responseCode = connection.getResponseCode();
         if(responseCode == 200){
@@ -45,7 +45,7 @@ public class LeaderBoardClient {
 
         // set request to get
         connection.setRequestMethod("GET");
-        String encoded = Base64.getEncoder().encodeToString((this.userName+":"+this.password).getBytes(StandardCharsets.UTF_8));
+        String encoded = Base64.encodeToString( (this.userName+ ":"+ this.password).getBytes(), Base64.DEFAULT);
         connection.setRequestProperty("Authorization", "Basic "+encoded);
 
         int responseCode = connection.getResponseCode();
@@ -72,7 +72,7 @@ public class LeaderBoardClient {
             }
             return leaderboard;
         }
-
+        System.out.println("Error");
         // an error happened
         return null;
     }
