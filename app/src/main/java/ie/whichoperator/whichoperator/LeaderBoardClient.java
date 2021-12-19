@@ -72,7 +72,6 @@ public class LeaderBoardClient {
             }
             return leaderboard;
         }
-        System.out.println("Error");
         // an error happened
         return null;
     }
