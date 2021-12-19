@@ -1,16 +1,22 @@
 package ie.whichoperator.whichoperator;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -26,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     Button btn1;
     Button btn2;
     Button btn3;
+    Button btnLeaderboard;
 
     TextView text;
     TextView score;
@@ -40,6 +47,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+        
         setContentView(R.layout.activity_main);
         rand = new Random();
         setUp();
@@ -54,11 +65,17 @@ public class MainActivity extends AppCompatActivity {
         btn1 = findViewById(R.id.btn1);
         btn2 = findViewById(R.id.btn2);
         btn3 = findViewById(R.id.btn3);
+        btnLeaderboard = findViewById(R.id.leaderboardBtn);
         score = findViewById(R.id.score);
         timer = findViewById(R.id.timer);
         highScore = findViewById(R.id.highscore);
         highScore.setText("High Score :" +Game.getHighScore(getSharedPreferences(SHARED_PREFERENCE,Context.MODE_PRIVATE)));
         populateComponentText();
+
+        btn0.setEnabled(true);
+        btn1.setEnabled(true);
+        btn2.setEnabled(true);
+        btn3.setEnabled(true);
 
         btn0.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -84,7 +101,15 @@ public class MainActivity extends AppCompatActivity {
                 answerQuestion(btn3.getText() + "");
             }
         });
+
+        btnLeaderboard.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(view.getContext(), LeaderboardActivity.class));
+            }
+        });
     }
+
 
     public void answerQuestion(String btnText) {
         game.getCurrentQuestion().setProvidedAnswer(btnText.charAt(0));
@@ -135,7 +160,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+    @SuppressLint("NewApi")
     public void gameOver(boolean timeUp) {
+        btn0.setEnabled(false);
+        btn1.setEnabled(false);
+        btn2.setEnabled(false);
+        btn3.setEnabled(false);
+        LeaderBoardClient client = new LeaderBoardClient(BuildConfig.USERNAME, BuildConfig.PASSWORD, BuildConfig.URL);
+        new Thread(() -> {
+            try {
+                client.submitScore("unknown", game.getCurrentScore());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
         // Check for a new high score and save it if there is
         if (game.getCurrentScore() > Game.getHighScore(getSharedPreferences(SHARED_PREFERENCE, Context.MODE_PRIVATE)))
             Game.setNewHighScore(game.getCurrentScore(),getSharedPreferences(SHARED_PREFERENCE,Context.MODE_PRIVATE));
