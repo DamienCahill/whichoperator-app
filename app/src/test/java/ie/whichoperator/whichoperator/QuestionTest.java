@@ -25,7 +25,7 @@ public class QuestionTest extends TestCase {
         char[] expectedAnswers = new char[]{'*','+'};
         String expectedQuestionText = "2 ? 2 = 4";
         Question expectedQ = new Question(expectedQuestionText,expectedAnswers);
-        Question actualQ = Question.getQuestion(num1,num2,num3);
+        Question actualQ = Game.getQuestion(num1,num2,num3);
         assertEquals(expectedQuestionText, actualQ.getText());
         assertArrayEquals("Potential Answers Arrays" , expectedQ.getCorrectAnswers(), actualQ.getCorrectAnswers());
     }
@@ -38,7 +38,7 @@ public class QuestionTest extends TestCase {
         char[] expectedAnswers = new char[]{'*'};
         String expectedQuestionText = "6 ? 2 = 12";
         Question expectedQ = new Question(expectedQuestionText,expectedAnswers);
-        Question actualQ = Question.getQuestion(num1,num2,num3);
+        Question actualQ = Game.getQuestion(num1,num2,num3);
         assertEquals(expectedQuestionText, actualQ.getText());
         assertArrayEquals("Potential Answers Arrays" , expectedQ.getCorrectAnswers(), actualQ.getCorrectAnswers());
     }
@@ -51,7 +51,7 @@ public class QuestionTest extends TestCase {
         char[] expectedAnswers = new char[]{'/'};
         String expectedQuestionText = "12 ? 3 = 4";
         Question expectedQ = new Question(expectedQuestionText,expectedAnswers);
-        Question actualQ = Question.getQuestion(num1,num2,num3);
+        Question actualQ = Game.getQuestion(num1,num2,num3);
         assertEquals(expectedQuestionText, actualQ.getText());
         assertArrayEquals("Potential Answers Arrays" , expectedQ.getCorrectAnswers(), actualQ.getCorrectAnswers());
     }
@@ -64,7 +64,7 @@ public class QuestionTest extends TestCase {
         char[] expectedAnswers = new char[]{'/'};
         String expectedQuestionText = "25 ? 5 = 5";
         Question expectedQ = new Question(expectedQuestionText,expectedAnswers);
-        Question actualQ = Question.getQuestion(num1,num2,num3);
+        Question actualQ = Game.getQuestion(num1,num2,num3);
         assertEquals(expectedQuestionText, actualQ.getText());
         assertArrayEquals("Potential Answers Arrays" , expectedQ.getCorrectAnswers(), actualQ.getCorrectAnswers());
     }
@@ -76,7 +76,7 @@ public class QuestionTest extends TestCase {
         char[] expectedAnswers = new char[]{'/'};
         String expectedQuestionText = "11 ? 11 = 1";
         Question expectedQ = new Question(expectedQuestionText,expectedAnswers);
-        Question actualQ = Question.getQuestion(num1,num2,num3);
+        Question actualQ = Game.getQuestion(num1,num2,num3);
         assertEquals(expectedQuestionText, actualQ.getText());
         assertArrayEquals("Potential Answers Arrays" , expectedQ.getCorrectAnswers(), actualQ.getCorrectAnswers());
     }
@@ -88,7 +88,7 @@ public class QuestionTest extends TestCase {
         int num3=0;
         char[] answers = new char[]{'/'};
         String questionText = "12 ? 6 = 2";
-        Question q = Question.getQuestion(num1,num2,num3);
+        Question q = Game.getQuestion(num1,num2,num3);
         q.setProvidedAnswer('*');
         assertEquals(false, q.getAnsweredCorrectly());
     }
@@ -100,7 +100,7 @@ public class QuestionTest extends TestCase {
         int num3=0;
         char[] answers = new char[]{'/'};
         String questionText = "12 ? 6 = 2";
-        Question q = Question.getQuestion(num1,num2,num3);
+        Question q = Game.getQuestion(num1,num2,num3);
         q.setProvidedAnswer('/');
         assertEquals(true, q.getAnsweredCorrectly());
     }

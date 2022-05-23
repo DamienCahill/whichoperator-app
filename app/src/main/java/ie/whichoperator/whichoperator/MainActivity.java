@@ -1,6 +1,5 @@
 package ie.whichoperator.whichoperator;
 
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -8,15 +7,12 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import java.io.IOException;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -37,10 +33,8 @@ public class MainActivity extends AppCompatActivity {
     TextView text;
     TextView score;
     TextView highScore;
-    TextView timer;
-
-    MyCountDownTimer counterDownTimer;
-    Timer myTimer;
+    TextView timerText;
+    Timer timer;
 
     Random rand;
 
@@ -52,12 +46,11 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.setThreadPolicy(policy);
         
         setContentView(R.layout.activity_main);
-        rand = new Random();
         setUp();
     }
     public void setUp() {
-        game = new Game();
-        game.setCurrentQuestion(Question.getQuestion(rand.nextInt(40),rand.nextInt(40),rand.nextInt(3+1)));
+        game = new Game(getSharedPreferences(SHARED_PREFERENCE,Context.MODE_PRIVATE), new Random());
+        game.setCurrentQuestion(Game.getQuestion(rand.nextInt(40),rand.nextInt(40),rand.nextInt(3+1)));
 
         //Initialise UI Components and set the text on them
         text = findViewById(R.id.text);
@@ -67,9 +60,9 @@ public class MainActivity extends AppCompatActivity {
         btn3 = findViewById(R.id.btn3);
         btnLeaderboard = findViewById(R.id.leaderboardBtn);
         score = findViewById(R.id.score);
-        timer = findViewById(R.id.timer);
+        timerText = findViewById(R.id.timer);
         highScore = findViewById(R.id.highscore);
-        highScore.setText("High Score :" +Game.getHighScore(getSharedPreferences(SHARED_PREFERENCE,Context.MODE_PRIVATE)));
+        highScore.setText("High Score :" + Game.getHighScore(getSharedPreferences(SHARED_PREFERENCE,Context.MODE_PRIVATE)));
         populateComponentText();
 
         btn0.setEnabled(true);
@@ -112,51 +105,35 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void answerQuestion(String btnText) {
-        game.getCurrentQuestion().setProvidedAnswer(btnText.charAt(0));
-        if (game.getCurrentQuestion().getAnsweredCorrectly()) { // correctly answered
 
-            if (game.isRunning())
-                counterDownTimer.addTime(1000);
-
-            game.increaseScore();
-        } else if (!game.isRunning()){ // incorrectly answered first question
-            // end the game with a score of 0!
+        if (!game.answerQuestion(btnText.charAt(0)) ){
             gameOver(false);
-            return;
-        } else { // incorrectly answered non first question
-            //subtract 5 seconds from remaining time
-            counterDownTimer.addTime(-5000);
-        }
+        } else {
+            if (!game.isRunning()) {
+                //start a new countdown timer
+                game.setGameTimer(new GameTimer(COUNTDOWN_START, 1000, timerText));
+                game.getGameTimer().start();
 
-        //get the next question
-        game.setCurrentQuestion(Question.getQuestion(rand.nextInt(40),rand.nextInt(40),rand.nextInt(3+1)));
-        populateComponentText();
+                //set the state of the game to be running
+                game.setRunningState(true);
 
-        // a new game is starting
-        if (!game.isRunning()) {
-            //start a new countdown timer
-            counterDownTimer = new MyCountDownTimer(COUNTDOWN_START, 1000, timer);
-            counterDownTimer.start();
-
-            //set the state of the game to be running
-            game.setRunningState(true);
-
-            //start a timer schedule to check if time has run out
-            myTimer = new Timer();
-            myTimer.scheduleAtFixedRate(new TimerTask() {
-                @Override
-                public void run() {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (game.isRunning() && timer.getText().equals("Times Up")) { // end the game
-                                game.setRunningState(false);
-                                gameOver(true);
+                //start a timer schedule to check if time has run out
+                timer.scheduleAtFixedRate(new TimerTask() {
+                    @Override
+                    public void run() {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (game.isRunning() && timerText.getText().equals("Times Up")) { // end the game
+                                    game.setRunningState(false);
+                                    gameOver(true);
+                                }
                             }
-                        }
-                    });
-                }
-            }, 100, 1000);
+                        });
+                    }
+                }, 100, 1000);
+            }
+            populateComponentText();
         }
     }
 
@@ -167,26 +144,7 @@ public class MainActivity extends AppCompatActivity {
         btn1.setEnabled(false);
         btn2.setEnabled(false);
         btn3.setEnabled(false);
-        LeaderBoardClient client = new LeaderBoardClient(BuildConfig.USERNAME, BuildConfig.PASSWORD, BuildConfig.URL);
-        new Thread(() -> {
-            try {
-                client.submitScore("unknown", game.getCurrentScore());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
-        // Check for a new high score and save it if there is
-        if (game.getCurrentScore() > Game.getHighScore(getSharedPreferences(SHARED_PREFERENCE, Context.MODE_PRIVATE)))
-            Game.setNewHighScore(game.getCurrentScore(),getSharedPreferences(SHARED_PREFERENCE,Context.MODE_PRIVATE));
-
-        //set the timers to be null
-        if (myTimer!=null) {
-            myTimer.cancel();
-            myTimer = null;
-        }
-
-        if (counterDownTimer!=null)
-            counterDownTimer=null;
+        game.gameOver();
 
         // set the appropriate ending message
         String gameOverReason = timeUp ? "Times Up! " : "INCORRECT! ";

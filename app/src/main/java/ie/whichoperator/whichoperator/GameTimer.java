@@ -15,9 +15,7 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
-public  class MyCountDownTimer {
+public  class GameTimer {
 
     /**
      * Millis since epoch when alarm should stop.
@@ -40,7 +38,7 @@ public  class MyCountDownTimer {
      * @param countDownInterval The interval along the way to receive
      *   {@link #onTick(long)} callbacks.
      */
-    public MyCountDownTimer(long millisInFuture, long countDownInterval, TextView timeText) {
+    public GameTimer(long millisInFuture, long countDownInterval, TextView timeText) {
         mMillisInFuture = millisInFuture;
         mCountdownInterval = countDownInterval;
         this.timerText = timeText;
@@ -55,7 +53,7 @@ public  class MyCountDownTimer {
     /**
      * Start the countdown.
      */
-    public synchronized final MyCountDownTimer start() {
+    public synchronized final GameTimer start() {
         mCancelled = false;
         if (mMillisInFuture <= 0) {
             onFinish();
@@ -98,7 +96,7 @@ public  class MyCountDownTimer {
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            synchronized (MyCountDownTimer.this) {
+            synchronized (GameTimer.this) {
                 if (mCancelled) {
                     return;
                 }
